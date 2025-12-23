@@ -195,7 +195,13 @@ If you use CNNreg in your research, please cite:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Links
+
+- Python Package: [CNNreg on PyPI](https://pypi.org/project/CNNreg/)
+- CNNreg: [CNNreg on GitHub](https://github.com/mwang159/CNNreg)
+- CNNregR: [CNNregR on GitHub](https://github.com/mwang159/CNNregR)
+- Issues: [Report bugs](https://github.com/mwang159/CNNreg/issues)
+
 ## Contact
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/CNNreg/issues)
 - **Email**: wang.xue@mayo.edu, liu.yuanhang@mayo.edu
