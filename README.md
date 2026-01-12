@@ -5,6 +5,8 @@
 
 A deep learning approach for cell type deconvolution of bulk RNA-seq data using single-cell RNA-seq reference data. CNNreg employs a custom CNN-based regression model to estimate cell type proportions in complex tissue samples.
 
+We recommend using [CNNregR](https://github.com/mwang159/CNNregR) package in R for easier data handling and preprocessing. Alternatively, users can also preprocess the data by yourself and use the Python API or CLI provided in this package.
+
 ## Installation
 
 ### Option 1: Using pip (Recommended)
