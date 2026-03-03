@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "CNNreg"
-version = "0.1.0"
+version = "0.1.1"
 description = "CNN-based regression for cell type deconvolution of bulk RNA-seq using scRNA-seq reference"
 readme = "README.md"
 authors = [
