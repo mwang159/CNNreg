@@ -19,7 +19,6 @@ requires-python = ">=3.9"
 dependencies = [
     "torch>=1.10.0",
     "torchmetrics>=0.10.0",
-    "torchsort>=0.1.0",
     "numpy",
     "pandas"
 ]

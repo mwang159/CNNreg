@@ -1,19 +1,19 @@
 import torch
 import torch.nn as nn
 import numpy as np
-import torchsort
 
 class RefCombLayer(nn.Module):
     """Reference combination layer for CNN deconvolution."""
     def __init__(self, pHash, dHash, device=None):
         super().__init__()
         num = 1.0 / pHash["n_ref"]
-        w = torch.empty(pHash["n_ref"] * pHash["n_celltype"])
-        self.weight = nn.Parameter(torch.nn.init.uniform_(w, a=num-num/5, b=num+num/5).to(device))
-        self.w_expand = torch.flatten(self.weight.expand([pHash["n_gene"], len(w)]))
+        self.w = torch.empty(pHash["n_ref"] * pHash["n_celltype"])
+        self.n_gene = pHash["n_gene"]
+        self.weight = nn.Parameter(torch.nn.init.uniform_(self.w, a=num-num/10, b=num+num/10).to(device))
 
     def forward(self, x):
-        return torch.mul(x, self.w_expand)
+        w_expand = torch.flatten(self.weight.expand([self.n_gene, len(self.w)]))
+        return torch.mul(x, w_expand)
 
 
 class SliceSumLayer(nn.Module):
@@ -44,21 +44,8 @@ class CelltypeScaleLayer(nn.Module):
         return torch.flatten(torch.t(z))
 
 
-class StretchLayer(nn.Module):
-    """Stretch layer to scale features per gene."""
-    def __init__(self, pHash, dHash, device=None):
-        super().__init__()
-        w = torch.empty(pHash["n_gene"])
-        self.weight = nn.Parameter(torch.nn.init.normal_(w, 1.0, 0.1).to(device))
-        self.w_expand = torch.flatten(torch.t(self.weight.expand((pHash["n_celltype"], -1))))
-
-
-    def forward(self, x):
-        return torch.mul(x, self.w_expand)
-
-
-class DeconvProp_S1(nn.Module):
-    """Stage I CNN model for cell proportion estimation."""
+class DeconvProp(nn.Module):
+    """CNN model for cell proportion estimation."""
     
     @staticmethod
     def ini_kernel_weight(pHash):
@@ -76,7 +63,6 @@ class DeconvProp_S1(nn.Module):
         self.refLayer = RefCombLayer(pHash, dHash, device=pHash["device"])
         self.sum = SliceSumLayer(pHash, dHash, device=pHash["device"])
         self.celltypeScaleLayer = CelltypeScaleLayer(pHash, dHash, device=pHash["device"])
-        self.stretchLayer = StretchLayer(pHash, dHash, device=pHash["device"])
         self.conv1 = nn.Conv1d(1, pHash["n_sample"], kernel_size=pHash["n_kernel"],
                                stride=pHash["n_kernel"], device=pHash["device"], bias=False)
         self.conv1.weight = self.ini_kernel_weight(pHash)
@@ -85,7 +71,6 @@ class DeconvProp_S1(nn.Module):
         y = self.refLayer(x)
         y0 = self.sum(y)
         y1 = self.celltypeScaleLayer(y0)
-        y2 = self.stretchLayer(y1)
-        y = y2.view(N_batch, 1, N_feature)
+        y = y1.view(N_batch, 1, N_feature)
         y = self.conv1(y).squeeze(0)
-        return y, y0, y1, y2
+        return y, y0, y1

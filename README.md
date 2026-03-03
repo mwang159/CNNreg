@@ -67,7 +67,7 @@ python -c "import CNNreg; print('CNNreg installed successfully!')"
 ### Command Line Interface
 
 ```bash
-cnnreg -M train \
+cnnreg \
     -bulk data/bulk.csv \
     -ref data/sc_ref.csv \
     -o output/ \
@@ -77,7 +77,6 @@ cnnreg -M train \
 ```
 
 **Parameters:**
-- `-M`: Mode - currently only `train` is implemented (evaluate/predict/explain coming in future versions)
 - `-bulk`: Path to bulk RNA-seq CSV file
 - `-ref`: Path to reference cell type specific expression (CSE) CSV
 - `-o`: Output directory
@@ -85,7 +84,7 @@ cnnreg -M train \
 - `-EP`: Maximum training epochs
 - `-pre`: Output file prefix
 
-**Note**: Training mode automatically generates cell proportion predictions for the input bulk samples. Predictions are saved at checkpoints (every 1000 epochs) and at completion.
+**Note**: Training automatically generates cell proportion predictions for the input bulk samples. Predictions are saved at checkpoints (every 10,000 epochs) and at completion (or early stop). Both raw and row-sum-normalized proportions are saved.
 
 ### Python API
 
@@ -94,7 +93,7 @@ import torch
 import pandas as pd
 from CNNreg.data import data_CSE, reformat_ref
 from CNNreg.train import trainProp
-from CNNreg.layers import DeconvProp_S1
+from CNNreg.layers import DeconvProp
 
 # Setup
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -112,7 +111,6 @@ pHash = {
     "reference": "sc_ref.csv",
     "data_out_dir": "output/",
     "max_epoch_cellprop": 50000,
-    "model_file": "output/model.pt",
     "prefix": "GBM",
     "device": device,
     "n_kernel": 7,
@@ -167,9 +165,8 @@ MESlike_ref1,0.9,0.2,0.4,...
 
 ## Output Files
 
-- `Prop_predicted_{prefix}_epoch_{N}.csv`: Cell proportions at checkpoint epochs (every 1000)
-- `Prop_predicted_{prefix}.csv`: Final estimated cell proportions
-- `cellprop_model.pt`: Trained PyTorch model (state dict)
+- `Estimation_{prefix}_epoch_{N}.csv`: Raw (unnormalized) cell proportion weights at checkpoint epochs (every 10,000) and at early stop / completion
+- `Estimation_{prefix}_epoch_{N}_normalized.csv`: Row-sum-normalized cell proportions (sum to 1 per sample) at the same checkpoints
 
 **Output format:**
 
@@ -181,13 +178,21 @@ Sample2,0.19,0.28,0.22,...
 
 ## Model Architecture
 
-CNNreg uses a custom 5-layer CNN pipeline specifically designed for biological deconvolution:
+CNNreg uses a custom 4-layer CNN pipeline specifically designed for biological deconvolution:
 
-1. **RefCombLayer**: Combines multiple reference samples per cell type
-2. **SliceSumLayer**: Aggregates reference combinations
-3. **CelltypeScaleLayer**: Scales expression for each cell type independently
-4. **StretchLayer**: Applies gene-specific scaling factors
-5. **Conv1D Layer**: Estimates cell proportions via 1D convolution
+1. **RefCombLayer**: Combines multiple reference samples per cell type via learned weighted combination
+2. **SliceSumLayer**: Aggregates weighted reference combinations into a single profile per cell type
+3. **CelltypeScaleLayer**: Scales the expression profile of each cell type independently (constrained to [0.25, 4])
+4. **Conv1D Layer**: Estimates cell proportions via 1D convolution (kernel size = number of cell types)
+
+### Training Strategy
+
+Training uses a **3-phase manual SGD cycle**:
+- **Phase 0** (`epoch % 3 == 0`): Tune `conv1` kernel weights (cell proportions) using Pearson correlation + expression fit loss
+- **Phase 1** (`epoch % 3 == 1`, only for `epoch < 30,000`): Tune `refLayer` weights (reference combination)
+- **Phase 2** (`epoch % 3 == 2`): Tune `celltypeScaleLayer` weights (per-cell-type scaling)
+
+**Early stopping** activates after epoch 20,000: training halts when correlation loss begins increasing and the model has already achieved Pearson r > 0.75 on high-variability genes.
 
 ## Citation
 

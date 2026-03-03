@@ -2,16 +2,6 @@ import torch
 import pandas as pd
 import numpy as np
 
-def flatten_list(nested_list):
-    """Flatten a nested list recursively."""
-    flattened_list = []
-    for item in nested_list:
-        if isinstance(item, list):
-            flattened_list.extend(flatten_list(item))
-        else:
-            flattened_list.append(item)
-    return flattened_list
-
 def divide_by_row_sum(array):
     """Normalize rows to sum to 1."""
     row_sums = np.sum(array, axis=1, keepdims=True)
