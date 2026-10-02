@@ -35,13 +35,15 @@ def main():
     dataHash = {
         "bulk": torch.tensor(df_bulk.iloc[:, 1:].values.transpose(), dtype=torch.float32).to(device),
         "sample": df_bulk.columns.values[range(1, df_bulk.shape[1])],
-        "celltype": [f"celltype_{i+1}" for i in range(paraHash["n_kernel"])],
         "CSE": data_CSE(paraHash["reference"], device=device)
     }
     paraHash["n_gene"] = df_bulk.shape[0]
     paraHash["n_sample"] = df_bulk.shape[1] - 1
     paraHash["n_celltype"] = paraHash["n_kernel"]
     paraHash["n_ref"] = dataHash["CSE"].expr_cse.shape[0]
+
+    dataHash["celltype"] = dataHash["CSE"].feature[1:(1+paraHash["n_kernel"])]
+    dataHash["celltype"] = [s.rsplit("_", 1)[-1] for s in dataHash["celltype"]]
 
     # Initialize index arrays for celltype and reference features
     k = paraHash["n_gene"] * paraHash["n_celltype"]
