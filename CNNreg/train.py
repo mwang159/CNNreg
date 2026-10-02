@@ -159,20 +159,20 @@ def trainProp(dHash, pHash):
         indx_1, indx_2 = get_indx(x_predict, new_ref, target, pHash, dHash)
 
         if modd == 1 and epoch < 30000:       # tune reference layer
-            r          = pearson_corrcoef(x_predict.t(), target.t())
+            r          = pearson_corrcoef(x_predict.t().double(), target.t().double())
             train_loss = loss_ref(net_Prop, pHash) + 0.1 * loss_epsilon_insensitive_2(r, torch.ones_like(r), 0.05)
             train_loss.backward()
             with torch.no_grad():
                 net_Prop.refLayer.weight.sub_(net_Prop.refLayer.weight.grad * LR / 5)
         elif modd == 2:     # tune cell type layer
-            r          = pearson_corrcoef(x_predict.t(), target.t())
+            r          = pearson_corrcoef(x_predict.t().double(), target.t().double())
             train_loss = loss_scale(net_Prop) + 0.1 * loss_epsilon_insensitive_2(r, torch.ones_like(r), 0.05)
             train_loss.backward()
             with torch.no_grad():
                 net_Prop.celltypeScaleLayer.weight.sub_(net_Prop.celltypeScaleLayer.weight.grad * LR)
         else:               # tune CNN kernel weight
-            r_1      = pearson_corrcoef(x_predict[:, indx_1], target[:, indx_1])
-            r_2      = pearson_corrcoef(x_predict[:, indx_2].t(), target[:, indx_2].t())
+            r_1      = pearson_corrcoef(x_predict[:, indx_1].double(), target[:, indx_1].double())
+            r_2      = pearson_corrcoef(x_predict[:, indx_2].t().double(), target[:, indx_2].t().double())
             loss_1     = loss_epsilon_insensitive(x_predict / dHash["target_mean_adj"], target / dHash["target_mean_adj"], 0.05)
             loss_2     = loss_epsilon_insensitive_2(r_1, torch.ones_like(r_1), 0.05)
             loss_3     = loss_epsilon_insensitive_2(r_2, torch.ones_like(r_2), 0.05)
@@ -187,8 +187,8 @@ def trainProp(dHash, pHash):
                 dict_loss["loss_2"].append(loss_2.item())
                 dict_loss["loss_3"].append(loss_3.item())
                 x_predict, x_afterRef, x_afterScale = net_Prop(dHash["CSE_reformat"], 1, pHash["n_celltype"] * pHash["n_gene"])
-                r_1      = pearson_corrcoef(x_predict[:, indx_1], target[:, indx_1])
-                r_2      = pearson_corrcoef(x_predict[:, indx_2].t(), target[:, indx_2].t())
+                r_1      = pearson_corrcoef(x_predict[:, indx_1].double(), target[:, indx_1].double())
+                r_2      = pearson_corrcoef(x_predict[:, indx_2].t().double(), target[:, indx_2].t().double())
                 loss_1  = loss_epsilon_insensitive(x_predict / dHash["target_mean_adj"], target / dHash["target_mean_adj"], 0.05)
                 loss_2  = loss_epsilon_insensitive_2(r_1, torch.ones_like(r_1), 0.05)
                 loss_3  = loss_epsilon_insensitive_2(r_2, torch.ones_like(r_2), 0.05)
