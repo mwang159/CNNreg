@@ -1,0 +1,15 @@
+name: cnnreg_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu126
+      - torch==2.8.0+cu126
+      - torchmetrics==1.8.2
+      - numpy==2.2.6
+      - pandas==2.3.3
+      - torchsort==0.1.10
+      - cnnreg==0.1.1
