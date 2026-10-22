@@ -16,6 +16,7 @@ class data_CSE(torch.utils.data.Dataset):
     def __init__(self, f_CSE, device):
         super().__init__()
         df_cse = pd.read_csv(f_CSE)
+        self.feature = df_cse.columns.to_numpy()
         sample = df_cse.iloc[:,0]
         expr_cse = df_cse.iloc[:,1:]
         self.expr_cse = torch.tensor(expr_cse.values, dtype=torch.float32).to(device)
