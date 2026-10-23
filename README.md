@@ -52,6 +52,15 @@ pip3 install torch --index-url https://download.pytorch.org/whl/cu126
 pip install CNNreg
 ```
 
+### Option 4: Using Docker
+
+```bash
+docker pull ghcr.io/liuy12/cnnreg:0.1.0
+docker run --rm -it --gpus all ghcr.io/liuy12/cnnreg:0.1.0
+```
+
+Use `--gpus all` when running GPU-enabled workloads. Omit it for CPU-only execution.
+
 ### Verify Installation
 
 ```bash
